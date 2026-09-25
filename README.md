@@ -38,11 +38,12 @@ bazelisk test //:test_fast
 bazelisk test //:test_portable
 ```
 
-Build for release with the following command.
+Build for release with the following commands. This produces `limbo-windows.zip` and `limbo-web.zip`.
 
 ```
-bazelisk build //:dist
-powershell -Command "Compress-Archive -Path bazel-bin/limbo -DestinationPath limbo.zip -Force"
+bazelisk build -c opt //:dist
+powershell -Command "Compress-Archive -Path bazel-bin/limbo_windows_package/* -DestinationPath limbo-windows.zip -Force"
+powershell -Command "Compress-Archive -Path bazel-bin/limbo_web_package/* -DestinationPath limbo-web.zip -Force"
 ```
 
 ### Running playthrough tests
