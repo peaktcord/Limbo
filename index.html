@@ -49,7 +49,7 @@
     <section id="game-shell">
       <canvas id="canvas" width="528" height="660" tabindex="0"
               aria-label="Oblivion game canvas"></canvas>
-      <p id="status" role="status">Loading…</p>
+      <p id="status" role="status" hidden></p>
       <input id="jar-file" type="file" accept=".jar,application/java-archive">
       <div class="actions">
         <button id="choose-jar" type="button" hidden>Select original JAR</button>
@@ -99,7 +99,9 @@
       printErr: function (text) { Module.oblivionLogError(text); }
     };
     Module.oblivionSetStatus = function (text, needsJar) {
+      text = text || Module.oblivionStorageWarning || '';
       status.textContent = text;
+      status.hidden = !text;
       jarButton.hidden = !needsJar;
       if (!needsJar) canvas.focus();
     };
