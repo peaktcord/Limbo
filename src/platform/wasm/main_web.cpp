@@ -22,9 +22,9 @@
 
 namespace {
 
-constexpr const char *kCacheDirectory = "/persistent/oblivion";
+constexpr const char *kCacheDirectory = "/limbo/oblivion";
 constexpr const char *kIncomingJar = "/incoming/oblivion.jar";
-constexpr const char *kSaveDirectory = "/persistent/saves/rms";
+constexpr const char *kSaveDirectory = "/limbo/saves/rms";
 
 using voyage::Input;
 using voyage::Viewport;

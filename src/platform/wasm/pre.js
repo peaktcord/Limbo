@@ -4,11 +4,11 @@ Module['preRun'].push(function () {
     addRunDependency(dependency);
     try {
         try {
-            FS.mkdir('/persistent');
+            FS.mkdir('/limbo');
         } catch (error) {
-            if (!FS.analyzePath('/persistent').exists) throw error;
+            if (!FS.analyzePath('/limbo').exists) throw error;
         }
-        FS.mount(IDBFS, { autoPersist: true }, '/persistent');
+        FS.mount(IDBFS, { autoPersist: true }, '/limbo');
         FS.syncfs(true, function (error) {
             if (error) {
                 Module['oblivionPersistenceReady'] = false;

@@ -19,7 +19,7 @@ verifies the JAR, stores only extracted resources in browser-local IndexedDB,
 and reuses those resources on later visits. The selected JAR is not uploaded
 by this build. Clearing site data removes the extracted resources and saves.
 
-The session log is stored with saves at /persistent/saves/rms/limbo.log
+The session log is stored with saves at /limbo/saves/rms/limbo.log
 and synchronized to IndexedDB. The previous session is limbo.log.prev.
 Use Save log on the page to download the current log when reporting a problem.
 

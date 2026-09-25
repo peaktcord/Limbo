@@ -112,7 +112,7 @@
     document.getElementById('save-log').addEventListener('click', function () {
       let bytes;
       try {
-        bytes = Module.FS.readFile('/persistent/saves/rms/limbo.log');
+        bytes = Module.FS.readFile('/limbo/saves/rms/limbo.log');
       } catch (error) {
         bytes = Module.oblivionLogMessages.join('\n');
       }
