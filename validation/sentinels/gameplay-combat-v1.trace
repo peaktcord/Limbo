@@ -1,0 +1,7 @@
+# name|time_ms|state|script_status|camera_target|player_present|alive|attacking|health|x|y|target|guard6_present|alive|attacking|health|x|y|target|guard7_present|alive|attacking|health|x|y|target|logical_frame_fnv1a64
+gameplay-start|103040|0|script stack empty|0|1|1|0|114|4290|5821|-1|1|1|0|42|4490|6254|-1|1|1|0|42|4200|6254|-1|8992076119041480942
+guards-engaged|119680|0|script stack empty|0|1|1|0|77|4228|6131|7|1|1|1|42|4430|6034|0|1|1|1|42|4200|6034|0|5964489349197145475
+first-strike|120100|0|script stack empty|0|1|1|1|74|4228|6131|7|1|1|1|42|4430|6034|0|1|1|1|27|4200|6034|0|9204061480398800162
+first-guard-defeated|122620|0|script stack empty|0|1|1|0|60|4228|6131|-1|1|1|1|42|4430|6034|0|0|-1|-1|-1|-1|-1|-1|4132290593713873662
+second-guard-wounded|123880|0|script stack empty|0|1|1|1|62|4228|6131|6|1|1|1|27|4430|6034|0|0|-1|-1|-1|-1|-1|-1|14705392627843635727
+courtyard-clear|125140|0|timer 388/2000 ms|0|1|1|0|63|4228|6131|-1|0|-1|-1|-1|-1|-1|-1|0|-1|-1|-1|-1|-1|-1|16475779279553935015

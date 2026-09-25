@@ -1,0 +1,6 @@
+# name|time_ms|state|level_id|player_present|health|max_health|dead|player_world_x|player_world_y|camera_target_actor|logical_frame_fnv1a64
+gameplay-start|103040|0|/l01_1.scr|1|114|114|0|4290|5821|0|8992076119041480942
+lethal-hit|103040|0|/l01_1.scr|1|-1|114|1|4290|5821|0|8992076119041480942
+game-over|103340|11|/l01_1.scr|1|114|114|0|4300|5900|0|8263119140813208803
+restarted|103460|0|/l01_1.scr|1|114|114|0|4300|5900|0|6896975699401233569
+movement-restored|107300|0|/l01_1.scr|1|85|114|0|4300|5807|0|13728917939454343817

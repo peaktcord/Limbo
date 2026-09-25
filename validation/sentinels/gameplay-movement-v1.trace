@@ -1,0 +1,5 @@
+# name|time_ms|state|script_status|player_present|player_world_x|player_world_y|player_screen_x|player_screen_y|camera_offset_x|camera_offset_y|camera_target_actor|logical_frame_fnv1a64
+gameplay-start|103040|0|script stack empty|1|4290|5821|-192|631|280|-481|0|8992076119041480942
+up-approach|115840|0|script stack empty|1|4290|5728|-180|626|280|-481|0|2332538878338178084
+blocked-up|119040|0|script stack empty|1|4290|5728|-180|626|280|-481|0|6023018234436010727
+moved-right|122240|0|script stack empty|1|4383|5728|-169|631|280|-481|0|16961929691586976053

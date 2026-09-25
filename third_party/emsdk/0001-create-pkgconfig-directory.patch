@@ -1,0 +1,77 @@
+diff --git a/emscripten_cache.bzl b/emscripten_cache.bzl
+index 844ce37..e657f99 100644
+--- a/emscripten_cache.bzl
++++ b/emscripten_cache.bzl
+@@ -90,6 +90,10 @@ def _emscripten_cache_repository_impl(repository_ctx):
+         repository_ctx.file("embuilder_config", embuilder_config_content)
+         embuilder_config_path = repository_ctx.path("embuilder_config")
+         embuilder_path = "{}{}".format(root.get_child("emscripten").get_child("embuilder"), script_ext)
++
++        # Ports such as SDL3 install pkg-config metadata, but an otherwise
++        # empty secondary cache does not create the containing directory.
++        repository_ctx.file("cache/sysroot/lib/pkgconfig/.keep", "")
+ 
+         # Prepare the command line
+         if repository_ctx.attr.targets:
+diff --git a/emscripten_toolchain/toolchain.bzl b/emscripten_toolchain/toolchain.bzl
+index a32aee0..56d99eb 100644
+--- a/emscripten_toolchain/toolchain.bzl
++++ b/emscripten_toolchain/toolchain.bzl
+@@ -84,7 +84,10 @@ def _impl(ctx):
+             exec_tools.exec_interpreter[platform_common.ToolchainInfo].py3_runtime
+         )
+ 
+-    builtin_sysroot = emscripten_dir + "/emscripten/cache/sysroot"
++    # A configured secondary cache may add ports and their headers. It is a
++    # declared toolchain input through em_config, so use its complete sysroot
++    # instead of continuing to compile against the SDK's built-in cache.
++    builtin_sysroot = ctx.file.em_config.dirname + "/cache/sysroot"
+ 
+     emcc_script = "emcc" + platform_info.script_extension
+     emcc_link_script = "emcc_link" + platform_info.script_extension
+diff --git a/BUILD b/BUILD
+index 8d848f9..00fc247 100644
+--- a/BUILD
++++ b/BUILD
+@@ -1,5 +1,7 @@
+ package(default_visibility = ["//visibility:public"])
+ 
++exports_files(["sdl3-3.4.14.patch"])
++
+ filegroup(name = "empty")
+ 
+ platform(
+diff --git a/remote_emscripten_repository.bzl b/remote_emscripten_repository.bzl
+index e0bb0e8..523eea4 100644
+--- a/remote_emscripten_repository.bzl
++++ b/remote_emscripten_repository.bzl
+@@ -15,5 +15,7 @@ def remote_emscripten_repository(
+         name = name,
+         build_file_content = EMSCRIPTEN_BUILD_FILE_CONTENT_TEMPLATE.format(bin_extension = bin_extension),
++        patch_args = ["-p1"],
++        patches = [Label("//:sdl3-3.4.14.patch")],
+         **kwargs
+     )
+ 
+diff --git a/sdl3-3.4.14.patch b/sdl3-3.4.14.patch
+new file mode 100644
+index 0000000..84402cf
+--- /dev/null
++++ b/sdl3-3.4.14.patch
+@@ -0,0 +1,16 @@
++diff --git a/emscripten/tools/ports/sdl3.py b/emscripten/tools/ports/sdl3.py
++index 0791c18..789867b 100644
++--- a/emscripten/tools/ports/sdl3.py
+++++ b/emscripten/tools/ports/sdl3.py
++@@ -8,9 +8,9 @@ import shutil
++ 
++ from tools import diagnostics
++ 
++-VERSION = '3.4.2'
+++VERSION = '3.4.14'
++ TAG = f'release-{VERSION}'
++-HASH = 'a17fe538993a3956e0b85fda21e7b431244e803a5facb35bb7a2bfd9ee23f1aac65838ed3225f526b81410cae7c23da7c40693c2e791385281f0764239116bce'
+++HASH = '02da1bdd168ca79e9718d7e0244ee1ad05b413363a56259385e2ef02f8f54a41d836d3cb995a1018123bb78ad7bf7ee39c7fff193ab5a369ed18d9b3d58a13bc'
++ SUBDIR = f'SDL-{TAG}'
++ 
++ variants = {'sdl3-mt': {'PTHREADS': 1}}

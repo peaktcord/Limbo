@@ -1,0 +1,7 @@
+# name|time_ms|state|health|max_health|magicka|max_magicka|health_potion|magicka_potion|learned_spell|active_spell|held_icon|effect_icon|inventory_count|logical_frame_fnv1a64
+items-ready|103040|0|64|114|0|24|1|2|-1|-1|-45|-1|7|8992076119041480942
+health-used|103160|0|114|114|0|24|-1|2|-1|-1|-45|-1|6|12725688423219054545
+magicka-used|103280|0|114|114|24|24|-1|-1|-1|-1|-45|-1|5|17423061310927436594
+spell-ready|103280|0|114|114|24|24|-1|-1|1|-1|-45|-1|5|17423061310927436594
+spell-equipped|103400|0|114|114|24|24|-1|-1|1|1|-48|-1|5|11932724038659325390
+spell-cast|104020|0|112|114|23|24|-1|-1|1|1|-48|-48|5|4632859592882741203

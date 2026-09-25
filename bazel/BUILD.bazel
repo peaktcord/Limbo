@@ -1,0 +1,6 @@
+exports_files([
+    "generate_supported_jars.py",
+    "generate_version.py",
+    "jar_inventory.py",
+    "package_distribution.py",
+])

@@ -1,0 +1,5 @@
+# name|time_ms|state|tab_index|selected_index|child_count|root_label|selected_label|logical_frame_fnv1a64
+character-menu|103160|2|0|0|3|Attack|Weapon: Iron Club|17573724714014475626
+selection-down|103280|2|0|1|3|Attack|Spell: Shield|13873987857051024514
+next-tab|103400|2|1|0|8|Armor|Arms|6308154552337458588
+gameplay-return|103520|0|1|0|8|Armor|Arms|8650427785085290708

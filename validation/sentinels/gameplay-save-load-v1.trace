@@ -1,0 +1,6 @@
+# name|time_ms|level_id|state|script_status|player_present|player_world_x|player_world_y|player_health|player_max_health|camera_target_actor|logical_frame_fnv1a64
+save-menu|104260|/l02_2_1.scr|3|running|1|4265|2828|120|120|-1|14721587561049134928
+saved|105000|/l02_2_1.scr|13|running|1|4265|2828|120|120|-1|14178421002951901481
+fresh-title|9960|/startup2.scr|3|running|1|0|0|-1|-1|0|7270154031264537299
+load-confirm|10700|/startup2.scr|14|script stack empty|1|0|0|-1|-1|0|18035421636639858332
+restored|11820|/l02_2_1.scr|3|running|1|4265|2828|120|120|-1|14721587561049134928

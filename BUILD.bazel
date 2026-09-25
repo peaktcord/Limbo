@@ -1,0 +1,1498 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
+load("@rules_decomp//decomp:sentinel.bzl", "sentinel_test")
+load("@rules_decomp//decomp:verified_inputs.bzl", "verified_files")
+load("//bazel:private_files_report.bzl", "private_files_report", "verified_files_data")
+load("//bazel:distribution_package.bzl", "distribution_package")
+load("//bazel:gameplay_trace.bzl", "gameplay_trace")
+load("//bazel:node_test.bzl", "node_test")
+load("//bazel:supported_jars_header.bzl", "supported_jars_header")
+load("//bazel:version_source.bzl", "version_source")
+load("//bazel:web_page.bzl", "web_page")
+load("//bazel:web_server.bzl", "web_server")
+
+package(default_visibility = ["//visibility:public"])
+
+_game_jars = glob(
+    ["artifacts/private/jars/*.jar"],
+    allow_empty = True,
+)
+
+verified_files(
+    name = "verified_game_jars",
+    srcs = _game_jars,
+    manifest = "validation/private/game-jars.sha256",
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+)
+
+verified_files_data(
+    name = "verified_game_jars_data",
+    input = ":verified_game_jars",
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+)
+
+private_files_report(
+    name = "game_jars_inventory",
+    input = ":verified_game_jars",
+    reporter = "//bazel:jar_inventory.py",
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+)
+
+supported_jars_header(
+    name = "supported_game_jars",
+    generator = "//bazel:generate_supported_jars.py",
+    inventory = "validation/sentinels/game-jars-inventory.json",
+    manifest = "validation/private/game-jars.sha256",
+)
+
+sentinel_test(
+    name = "game_jars_inventory_sentinel_test",
+    actual = ":game_jars_inventory",
+    expected = "validation/sentinels/game-jars-inventory.json",
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+test_suite(
+    name = "test_fast",
+    tests = [
+        ":game_install_api_test",
+        ":game_runtime_api_test",
+        ":jar_prompt_test",
+        ":logging_test",
+        ":save_store_test",
+        ":save_codec_test",
+        ":native_text_test",
+        ":resource_text_test",
+        ":resource_store_test",
+        ":font_render_test",
+        ":platform_adapter_test",
+        ":session_contract_test",
+        ":oblivion_statics_test",
+        ":render_contract_test",
+        ":shim_smoke_test",
+        ":port_settings_test",
+    ],
+)
+
+test_suite(
+    name = "test_portable",
+    tests = [":limbo_wasm_probe_test"],
+)
+
+test_suite(
+    name = "test_private_jars",
+    tests = [
+        ":game_runtime_lifecycle_test",
+        ":dialogue_layout_test",
+        ":gameplay_combat_scenario_test",
+        ":gameplay_death_restart_scenario_test",
+        ":gameplay_items_spell_scenario_test",
+        ":gameplay_level_transition_scenario_test",
+        ":gameplay_menu_actions_scenario_test",
+        ":gameplay_menu_scenario_test",
+        ":gameplay_movement_scenario_test",
+        ":gameplay_save_load_scenario_test",
+        ":gameplay_wide_viewport_scenario_test",
+        ":game_jars_inventory_sentinel_test",
+        ":game_install_private_test",
+        ":game_runtime_determinism_test",
+        ":game_runtime_multi_instance_test",
+        ":game_runtime_smoke_test",
+        ":runtime_logging_test",
+        ":intro_skip_test",
+        ":lang_tables_test",
+        ":script_operand_order_test",
+    ],
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+)
+
+NATIVE_TEST_COMPATIBILITY = select({
+    "@platforms//os:linux": [],
+    "@platforms//os:windows": [],
+    "//conditions:default": ["@platforms//:incompatible"],
+})
+
+MSVC_COPTS = [
+    "/std:c++17",
+    "/EHsc",
+    "/utf-8",
+]
+
+POSIX_COPTS = [
+    "-std=c++17",
+    "-fexceptions",
+]
+
+COPTS = select({
+    "@rules_cc//cc/compiler:msvc-cl": MSVC_COPTS,
+    "//conditions:default": POSIX_COPTS,
+})
+
+cc_library(
+    name = "logging",
+    srcs = ["src/diagnostics/log.cpp"],
+    hdrs = ["src/diagnostics/log.hpp"],
+    copts = COPTS,
+)
+
+version_source(
+    name = "version_src",
+    generator = "//bazel:generate_version.py",
+)
+
+cc_library(
+    name = "version",
+    srcs = [":version_src"],
+    hdrs = ["src/diagnostics/version.hpp"],
+    copts = COPTS,
+)
+
+cc_library(
+    name = "binary_io",
+    hdrs = ["src/storage/binary_io.hpp"],
+    copts = COPTS,
+)
+
+cc_library(
+    name = "resource_store",
+    srcs = ["src/storage/resource_store.cpp"],
+    hdrs = ["src/storage/resource_store.hpp"],
+    copts = COPTS,
+    deps = [":logging"],
+)
+
+cc_test(
+    name = "resource_store_test",
+    srcs = ["tests/resource_store_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":resource_store"],
+)
+
+cc_library(
+    name = "save_store",
+    srcs = ["src/storage/save_store.cpp"],
+    hdrs = ["src/storage/save_store.hpp"],
+    copts = COPTS,
+    deps = [":binary_io", ":logging"],
+)
+
+cc_library(
+    name = "save_codec",
+    srcs = ["src/game/save_codec.cpp"],
+    hdrs = ["src/game/save_codec.hpp"],
+    copts = COPTS,
+    deps = [":binary_io"],
+)
+
+cc_test(
+    name = "save_store_test",
+    srcs = ["tests/save_store_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":save_store"],
+)
+
+cc_test(
+    name = "save_codec_test",
+    srcs = ["tests/save_codec_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":save_codec"],
+)
+
+cc_test(
+    name = "logging_test",
+    srcs = ["tests/logging_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":logging"],
+)
+
+cc_library(
+    name = "port_settings",
+    srcs = ["src/game/port_settings.cpp"],
+    hdrs = ["src/game/port_settings.hpp"],
+    copts = COPTS,
+)
+
+cc_test(
+    name = "port_settings_test",
+    srcs = ["tests/port_settings_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":port_settings"],
+)
+
+cc_library(
+    name = "crash_trace",
+    srcs = ["src/platform/crash_trace.cpp"],
+    hdrs = ["src/platform/crash_trace.hpp"],
+    copts = COPTS,
+    linkopts = ["/DEFAULTLIB:dbghelp"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":logging"],
+)
+
+cc_library(
+    name = "font_metrics",
+    hdrs = ["src/common/font_metrics.hpp"],
+    copts = COPTS,
+)
+
+cc_library(
+    name = "common_runtime",
+    hdrs = ["src/common/runtime.hpp"],
+    copts = COPTS,
+    deps = [":logging"],
+)
+
+cc_library(
+    name = "session_context",
+    hdrs = ["src/common/session.hpp"],
+    copts = COPTS,
+    deps = [
+        ":common_runtime",
+        ":logging",
+        ":native_text",
+        ":resource_store",
+    ],
+)
+
+cc_library(
+    name = "ui",
+    hdrs = ["src/common/ui.hpp"],
+    copts = COPTS,
+    deps = [
+        ":common_runtime",
+        ":font_metrics",
+        ":logging",
+        ":native_text",
+        ":resource_store",
+        ":session_context",
+    ],
+)
+
+
+cc_library(
+    name = "native_text",
+    srcs = ["src/text/text.cpp"],
+    hdrs = ["src/text/text.hpp"],
+    copts = COPTS,
+    deps = [":logging"],
+)
+
+cc_test(
+    name = "native_text_test",
+    srcs = ["tests/native_text_test.cpp"],
+    copts = COPTS,
+    deps = [":native_text"],
+)
+
+cc_test(
+    name = "resource_text_test",
+    srcs = ["tests/resource_text_test.cpp"],
+    copts = COPTS,
+    deps = [":limbo_game"],
+)
+
+cc_test(
+    name = "crash_trace_test",
+    srcs = ["tests/crash_trace_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":crash_trace", ":session_context"],
+)
+
+cc_test(
+    name = "game_install_api_test",
+    srcs = ["tests/game_install_api_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":game_install"],
+)
+
+cc_test(
+    name = "game_runtime_api_test",
+    srcs = ["tests/game_runtime_api_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":game_runtime"],
+)
+
+cc_library(
+    name = "render",
+    srcs = ["src/common/render/render.cpp"],
+    hdrs = [
+        "src/common/render/render.hpp",
+        "src/common/render/s60font.hpp",
+        "src/common/render/sprite.hpp",
+    ],
+    copts = COPTS,
+    textual_hdrs = [
+        "third_party/stb/stb_image.h",
+        "third_party/stb/stb_image_write.h",
+    ],
+    deps = [":ui"],
+)
+
+cc_test(
+    name = "shim_smoke_test",
+    srcs = ["tests/shim_smoke.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":save_store", ":render"],
+)
+
+cc_test(
+    name = "session_contract_test",
+    srcs = ["tests/session_contract_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":session_context", ":ui"],
+)
+
+cc_test(
+    name = "font_render_test",
+    srcs = ["tests/font_render_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":render"],
+)
+
+cc_test(
+    name = "render_contract_test",
+    srcs = ["tests/render_contract_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":render"],
+)
+
+cc_library(
+    name = "limbo_game",
+    srcs = [
+        "src/limbo/crash_report.cpp",
+        "src/limbo/iso_transform.cpp",
+        "src/limbo/key_bindings.cpp",
+        "src/limbo/reference_pages.cpp",
+        "src/limbo/string_table.cpp",
+        "src/limbo/ui_fonts.cpp",
+        "src/limbo/text_resources.cpp",
+        "src/limbo/game_canvas.cpp",
+        "src/limbo/game_canvas_flow.cpp",
+        "src/limbo/game_canvas_input.cpp",
+        "src/limbo/game_canvas_input_dialogs.cpp",
+        "src/limbo/game_canvas_input_gameplay.cpp",
+        "src/limbo/game_canvas_input_menus.cpp",
+        "src/limbo/game_canvas_lifecycle.cpp",
+        "src/limbo/game_canvas_level.cpp",
+        "src/limbo/game_canvas_menus.cpp",
+        "src/limbo/game_canvas_persistence.cpp",
+        "src/limbo/menu_node.cpp",
+        "src/limbo/sprite_atlas.cpp",
+        "src/limbo/game_data.cpp",
+        "src/limbo/game_data_decoding.cpp",
+        "src/limbo/game_data_scripts.cpp",
+        "src/limbo/menu_screen.cpp",
+        "src/limbo/actor_system.cpp",
+        "src/limbo/actor_system_ai.cpp",
+        "src/limbo/actor_system_combat.cpp",
+        "src/limbo/actor_system_movement.cpp",
+        "src/limbo/magic_effects.cpp",
+        "src/limbo/statics.cpp",
+    ],
+    hdrs = [
+        "src/limbo/actor.hpp",
+        "src/limbo/actor_system.hpp",
+        "src/limbo/game_canvas.hpp",
+        "src/limbo/game_data.hpp",
+        "src/limbo/magic_effects.hpp",
+        "src/limbo/menu_node.hpp",
+        "src/limbo/menu_screen.hpp",
+        "src/limbo/oblivion_state.hpp",
+        "src/limbo/sprite_atlas.hpp",
+        "src/limbo/sprite_frame.hpp",
+        "src/limbo/statics.hpp",
+        "src/limbo/crash_report.hpp",
+        "src/limbo/iso_transform.hpp",
+        "src/limbo/key_bindings.hpp",
+        "src/limbo/reference_pages.hpp",
+        "src/limbo/string_table.hpp",
+        "src/limbo/ui_fonts.hpp",
+        "src/limbo/text_resources.hpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":port_settings",
+        ":render",
+        ":save_codec",
+        ":save_store",
+        ":session_context",
+        ":ui",
+    ],
+)
+
+cc_test(
+    name = "oblivion_statics_test",
+    srcs = ["tests/oblivion_statics_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [":limbo_game"],
+)
+
+cc_library(
+    name = "game_install",
+    srcs = [
+        "src/game/game_install.cpp",
+        "src/game/sha256.cpp",
+    ],
+    hdrs = [
+        ":supported_game_jars",
+        "src/game/game_install.hpp",
+        "src/game/sha256.hpp",
+    ],
+    copts = COPTS,
+    deps = ["@zlib//:zlib"],
+)
+
+cc_library(
+    name = "game_runtime",
+    srcs = [
+        "src/game/game_runtime.cpp",
+        "src/game/input_mapper.cpp",
+        "src/game/state_inspector.cpp",
+    ],
+    hdrs = [
+        "src/game/game_runtime.hpp",
+        "src/game/input_mapper.hpp",
+        "src/game/state_inspector.hpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":port_settings",
+        ":save_store",
+        ":limbo_game",
+        ":render",
+    ],
+)
+
+cc_library(
+    name = "platform_input",
+    hdrs = [
+        "src/platform/adapter_policy.hpp",
+        "src/platform/held_input.hpp",
+    ],
+    copts = COPTS,
+    deps = [":game_runtime"],
+)
+
+cc_library(
+    name = "jar_prompt",
+    srcs = ["src/game/jar_prompt.cpp"],
+    hdrs = ["src/game/jar_prompt.hpp"],
+    copts = COPTS,
+    deps = [
+        ":game_runtime",
+        ":render",
+    ],
+)
+
+cc_library(
+    name = "jar_intake_screen",
+    hdrs = ["src/platform/sdl/jar_intake_screen.hpp"],
+    copts = COPTS,
+    deps = [
+        ":game_install",
+        ":jar_prompt",
+        "@decomp_sdl3//:sdl3",
+    ],
+)
+
+cc_test(
+    name = "jar_prompt_test",
+    srcs = ["tests/jar_prompt_test.cpp"],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [
+        ":jar_intake_screen",
+        ":render",
+    ],
+)
+
+cc_test(
+    name = "platform_adapter_test",
+    srcs = [
+        "src/platform/sdl/key_map.hpp",
+        "tests/platform_adapter_test.cpp",
+    ],
+    copts = COPTS,
+    size = "small",
+    target_compatible_with = NATIVE_TEST_COMPATIBILITY,
+    deps = [
+        ":platform_input",
+        "@decomp_sdl3//:sdl3",
+    ],
+)
+
+cc_library(
+    name = "gameplay_scenario_support",
+    srcs = ["tests/support/gameplay_scenario.cpp"],
+    hdrs = ["tests/support/gameplay_scenario.hpp"],
+    copts = COPTS,
+    visibility = ["//:__pkg__"],
+    deps = [":game_runtime"],
+)
+
+cc_binary(
+    name = "limbo_wasm_probe_cc",
+    srcs = ["src/platform/wasm/portability_probe.cpp"],
+    copts = COPTS + ["-sUSE_SDL=3"],
+    linkopts = [
+        "-fexceptions",
+        "-sALLOW_MEMORY_GROWTH=1",
+        "-sUSE_SDL=3",
+    ],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    deps = [
+        ":resource_store",
+        ":save_codec",
+        ":save_store",
+        ":game_install",
+        ":game_runtime",
+    ],
+)
+
+wasm_cc_binary(
+    name = "limbo_wasm_probe",
+    cc_target = ":limbo_wasm_probe_cc",
+    tags = ["manual"],
+)
+
+node_test(
+    name = "limbo_wasm_probe_test",
+    program = ":limbo_wasm_probe",
+    size = "small",
+    tags = ["manual"],
+)
+
+cc_binary(
+    name = "limbo_web_cc",
+    srcs = [
+        "src/platform/sdl/key_map.hpp",
+        "src/platform/sdl/sdl_presenter.hpp",
+        "src/platform/wasm/main_web.cpp",
+    ],
+    additional_linker_inputs = ["src/platform/wasm/pre.js"],
+    copts = COPTS + ["-sUSE_SDL=3"],
+    linkopts = [
+        "-fexceptions",
+        "-lidbfs.js",
+        "-sALLOW_MEMORY_GROWTH=1",
+        "-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$IDBFS",
+        "-sENVIRONMENT=web",
+        "-sFORCE_FILESYSTEM=1",
+        "-sEXPORTED_RUNTIME_METHODS=FS",
+        "-sUSE_SDL=3",
+        "--pre-js",
+        "$(location src/platform/wasm/pre.js)",
+    ],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    deps = [
+        ":game_install",
+        ":game_runtime",
+        ":jar_prompt",
+        ":platform_input",
+        ":session_context",
+        ":version",
+    ],
+)
+
+wasm_cc_binary(
+    name = "limbo_web_module",
+    cc_target = ":limbo_web_cc",
+    outputs = [
+        "limbo_web/limbo_web_cc.js",
+        "limbo_web/limbo_web_cc.wasm",
+    ],
+    tags = ["manual"],
+)
+
+web_page(
+    name = "limbo_web_page",
+    out = "limbo_web/index.html",
+    script_name = "limbo_web_cc.js",
+    template = "src/platform/wasm/shell.html",
+)
+
+filegroup(
+    name = "limbo_web",
+    srcs = [
+        ":limbo_web_module",
+        ":limbo_web_page",
+    ],
+    tags = ["manual"],
+)
+
+web_server(
+    name = "limbo_web_server",
+    page = ":limbo_web_page",
+    srcs = [":limbo_web_module"],
+    tags = ["manual"],
+)
+
+cc_binary(
+    name = "limbo_sdl",
+    srcs = [
+        "src/platform/sdl/key_map.hpp",
+        "src/platform/sdl/main_sdl.cpp",
+        "src/platform/sdl/sdl_presenter.hpp",
+    ],
+    copts = COPTS,
+    linkopts = ["/ENTRY:mainCRTStartup", "/SUBSYSTEM:WINDOWS"],
+    data = ["@decomp_sdl3//:runtime"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":crash_trace",
+        ":game_install",
+        ":game_runtime",
+        ":jar_intake_screen",
+        ":platform_input",
+        ":port_settings",
+        ":version",
+        "@decomp_sdl3//:sdl3",
+    ],
+)
+
+cc_binary(
+    name = "limbo_sdl_debug",
+    srcs = [
+        "src/platform/sdl/key_map.hpp",
+        "src/platform/sdl/main_sdl.cpp",
+        "src/platform/sdl/sdl_presenter.hpp",
+    ],
+    copts = COPTS,
+    defines = ["VOYAGE_THROW_TRACE=1"],
+    features = ["generate_pdb_file"],
+    linkopts = ["/ENTRY:mainCRTStartup", "/SUBSYSTEM:WINDOWS", "/DEBUG:FULL"],
+    data = ["@decomp_sdl3//:runtime"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":crash_trace",
+        ":game_install",
+        ":game_runtime",
+        ":jar_intake_screen",
+        ":platform_input",
+        ":port_settings",
+        ":version",
+        "@decomp_sdl3//:sdl3",
+    ],
+)
+
+cc_binary(
+    name = "limbo_capture",
+    srcs = ["src/platform/capture/capture_frames.cpp"],
+    copts = COPTS,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":render",
+    ],
+)
+
+distribution_package(
+    name = "limbo_windows_package",
+    binary = ":limbo_sdl",
+    docs = [
+        "COPYING",
+        "THIRD_PARTY_NOTICES.md",
+        "packaging/native/CONTROLS.txt",
+        "packaging/native/README.txt",
+        "packaging/native/run.cmd",
+    ],
+    named_files = {
+        "@decomp_sdl3//:license": "licenses/SDL3.txt",
+        "@zlib//:LICENSE": "licenses/zlib.txt",
+        "packaging/licenses/README.txt": "licenses/README.txt",
+        "packaging/licenses/stb.txt": "licenses/stb.txt",
+    },
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+distribution_package(
+    name = "limbo_web_package",
+    docs = [
+        "COPYING",
+        "THIRD_PARTY_NOTICES.md",
+        "packaging/web/README.txt",
+        "tools/serve_web.py",
+    ],
+    files = [":limbo_web"],
+    named_files = {
+        "@decomp_sdl3//:license": "licenses/SDL3.txt",
+        "@zlib//:LICENSE": "licenses/zlib.txt",
+        "packaging/licenses/Emscripten.txt": "licenses/Emscripten.txt",
+        "packaging/licenses/LLVM-compiler-rt.txt": "licenses/LLVM-compiler-rt.txt",
+        "packaging/licenses/LLVM-libcxx.txt": "licenses/LLVM-libcxx.txt",
+        "packaging/licenses/README.txt": "licenses/README.txt",
+        "packaging/licenses/musl.txt": "licenses/musl.txt",
+        "packaging/licenses/stb.txt": "licenses/stb.txt",
+    },
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "dist",
+    srcs = [
+        ":limbo_web_package",
+        ":limbo_windows_package",
+    ],
+    tags = ["manual"],
+)
+
+cc_test(
+    name = "lang_tables_test",
+    srcs = ["tests/lang_tables_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(
+        [
+            "artifacts/extracted/v1010/copywrite.txt",
+            "artifacts/extracted/v1010/lang_*.txt",
+        ],
+        allow_empty = True,
+    ),
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":limbo_game",
+        ":session_context",
+    ],
+)
+
+cc_test(
+    name = "script_operand_order_test",
+    srcs = ["tests/script_operand_order_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":limbo_game",
+        ":render",
+    ],
+)
+
+cc_test(
+    name = "dialogue_layout_test",
+    srcs = ["tests/dialogue_layout_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":save_store",
+        ":limbo_game",
+        ":render",
+    ],
+)
+
+cc_test(
+    name = "game_install_private_test",
+    srcs = ["tests/game_install_private_test.cpp"],
+    args = ["$(rootpath %s)" % jar for jar in _game_jars],
+    copts = COPTS,
+    data = _game_jars + [":verified_game_jars_data"],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_install",
+        ":game_runtime",
+        ":jar_intake_screen",
+    ],
+)
+
+cc_test(
+    name = "game_runtime_determinism_test",
+    srcs = ["tests/game_runtime_determinism_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":game_runtime"],
+)
+
+cc_test(
+    name = "game_runtime_multi_instance_test",
+    srcs = ["tests/game_runtime_multi_instance_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+    ],
+)
+
+cc_test(
+    name = "gameplay_movement_scenario_test",
+    srcs = ["tests/gameplay_movement_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-movement-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-movement-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":platform_input",
+    ],
+)
+
+cc_test(
+    name = "gameplay_combat_scenario_test",
+    srcs = ["tests/gameplay_combat_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-combat-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-combat-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_combat_scenario_runner",
+    srcs = ["tests/gameplay_combat_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_combat_trace",
+    out = "gameplay-combat-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_combat_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "gameplay_level_transition_scenario_test",
+    srcs = ["tests/gameplay_level_transition_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-level-transition-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-level-transition-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_level_transition_scenario_runner",
+    srcs = ["tests/gameplay_level_transition_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_level_transition_trace",
+    out = "gameplay-level-transition-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_level_transition_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "gameplay_save_load_scenario_test",
+    srcs = ["tests/gameplay_save_load_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-save-load-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-save-load-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_save_load_scenario_runner",
+    srcs = ["tests/gameplay_save_load_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_save_load_trace",
+    out = "gameplay-save-load-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_save_load_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_movement_scenario_runner",
+    srcs = ["tests/gameplay_movement_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":platform_input",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_movement_trace",
+    out = "gameplay-movement-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_movement_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_menu_scenario_runner",
+    srcs = ["tests/gameplay_menu_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+cc_test(
+    name = "gameplay_menu_scenario_test",
+    srcs = ["tests/gameplay_menu_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-menu-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-menu-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_menu_trace",
+    out = "gameplay-menu-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_menu_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "gameplay_items_spell_scenario_test",
+    srcs = ["tests/gameplay_items_spell_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-items-spell-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-items-spell-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_items_spell_scenario_runner",
+    srcs = ["tests/gameplay_items_spell_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_items_spell_trace",
+    out = "gameplay-items-spell-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_items_spell_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "gameplay_death_restart_scenario_test",
+    srcs = ["tests/gameplay_death_restart_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-death-restart-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-death-restart-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_death_restart_scenario_runner",
+    srcs = ["tests/gameplay_death_restart_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_death_restart_trace",
+    out = "gameplay-death-restart-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_death_restart_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "gameplay_menu_actions_scenario_test",
+    srcs = ["tests/gameplay_menu_actions_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-menu-actions-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-menu-actions-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_menu_actions_scenario_runner",
+    srcs = ["tests/gameplay_menu_actions_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_menu_actions_trace",
+    out = "gameplay-menu-actions-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_menu_actions_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "gameplay_wide_viewport_scenario_test",
+    srcs = ["tests/gameplay_wide_viewport_scenario_test.cpp"],
+    args = [
+        "artifacts/extracted/v1010",
+        "$(rootpath validation/sentinels/gameplay-wide-viewport-v1.trace)",
+    ],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True) + [
+        "validation/sentinels/gameplay-wide-viewport-v1.trace",
+    ],
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+    ],
+)
+
+cc_binary(
+    name = "gameplay_wide_viewport_scenario_runner",
+    srcs = ["tests/gameplay_wide_viewport_scenario_test.cpp"],
+    copts = COPTS,
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+    ],
+)
+
+gameplay_trace(
+    name = "refresh_gameplay_wide_viewport_trace",
+    out = "gameplay-wide-viewport-v1.trace",
+    resource_dir = "artifacts/extracted/v1010",
+    resources = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    runner = ":gameplay_wide_viewport_scenario_runner",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+)
+
+cc_test(
+    name = "game_runtime_smoke_test",
+    srcs = ["tests/game_runtime_smoke_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = [
+        "manual",
+        "no-remote",
+        "no-remote-cache",
+        "no-remote-exec",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":game_runtime"],
+)
+
+cc_test(
+    name = "game_runtime_lifecycle_test",
+    srcs = ["tests/game_runtime_lifecycle_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = ["manual", "no-remote", "no-remote-cache", "no-remote-exec", "requires-private-data"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":game_runtime", ":limbo_game"],
+)
+
+cc_test(
+    name = "runtime_logging_test",
+    srcs = ["tests/runtime_logging_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = ["manual", "no-remote", "no-remote-cache", "no-remote-exec", "requires-private-data"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":game_runtime", ":limbo_game"],
+)
+
+cc_test(
+    name = "intro_skip_test",
+    srcs = ["tests/intro_skip_test.cpp"],
+    args = ["artifacts/extracted/v1010"],
+    copts = COPTS,
+    data = glob(["artifacts/extracted/v1010/**"], allow_empty = True),
+    size = "small",
+    tags = [
+        "manual",
+        "requires-private-data",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":game_runtime",
+        ":gameplay_scenario_support",
+        ":limbo_game",
+    ],
+)

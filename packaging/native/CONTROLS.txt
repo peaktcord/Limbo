@@ -1,0 +1,24 @@
+Oblivion controls
+=================
+
+WASD / arrows    Move / navigate (hold to keep walking)
+Space / E / F / Enter / left mouse  Attack / select / confirm
+Tab / C / I      Character sheet / inventory
+Escape / Backspace / P / right mouse  Menu / back
+1 / H            Quick health
+2 / M / R        Quick magicka
+Q / X / middle mouse  Toggle weapon / spell
+F11              Toggle phone/boundary camera and wide/centered camera (with modern 8-way movement)
+Alt+Enter        Toggle fullscreen
+
+Top-row 0 and 3-9 and the numeric keypad send the original phone digit codes
+used by the in-game Controls screen. Top-row 1 and 2 remain the convenient
+quick-item aliases.
+
+Confirm also skips the opening story crawl, which the original could only leave
+by waiting for it to scroll to the end.
+
+Confirm automatically follows the highlighted or primary choice on phone-style
+Yes/No and OK prompts; Escape, Backspace, P, or right mouse selects Back/No.
+In wide mode, a confirm that opens dialogue must be released before a fresh
+confirm can dismiss it, replacing the original one-second lockout.

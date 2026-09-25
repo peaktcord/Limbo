@@ -1,0 +1,115 @@
+#ifndef OBLIVION_ACTOR_HPP
+#define OBLIVION_ACTOR_HPP
+
+#include "src/common/ui.hpp"
+
+class SpriteFrame;
+
+class Actor {
+public:
+    SharedArray<int8_t> tile_position = SharedArray<int8_t>(2);
+    SharedArray<int8_t> footprint_left_tile = SharedArray<int8_t>(2);
+    SharedArray<int8_t> footprint_center_tile = SharedArray<int8_t>(2);
+    SharedArray<int8_t> footprint_right_tile = SharedArray<int8_t>(2);
+    int8_t footprint_width = 0;
+    int8_t footprint_half_width = 0;
+    int8_t actor_kind = 0;
+    int8_t facing = 2;
+    int8_t anim_state = 0;
+    int8_t character_class = -1;
+    int8_t status_icon_frame = -1;
+    int8_t buff_effect_slot = -1;
+    int8_t weapon_damage_bonus = 0;
+    int8_t equipped_weapon_id = 0;
+    int8_t death_script_id = -1;
+    int8_t tile_enter_script_id = -1;
+    int8_t tile_exit_script_id = -1;
+    int8_t tile_use_script_id = -1;
+    int8_t level = 0;
+    int8_t collision_enabled = 1;
+    int8_t is_dead = 0;
+    int8_t faction_id = 1;
+    int8_t loot_drop_enabled = 1;
+    int8_t bow_equipped = 0;
+    int8_t is_invulnerable = 0;
+    int8_t hand_icon_frame = -45;
+    int8_t offhand_icon_frame = -1;
+    int8_t damage_over_time_amount = 0;
+    int8_t ai_behavior = -1;
+    int8_t auto_attack_enabled = 1;
+    int8_t teleport_hidden = 0;
+    int16_t action_animation_remaining_ms = 0;
+    int16_t animation_frame_elapsed_ms = 0;
+    int16_t health_regen_elapsed_ms = 0;
+    int16_t health_regen_interval_ms = 0;
+    int16_t magicka_regen_elapsed_ms = 0;
+    int16_t magicka_regen_interval_ms = 0;
+    int16_t movement_elapsed_ms = 0;
+    int16_t combat_text_step_elapsed_ms = 0;
+    int16_t death_elapsed_ms = 0;
+    int16_t potion_buff_elapsed_ms = 0;
+    int16_t damage_over_time_remaining_ms = 0;
+    int16_t damage_over_time_tick_remaining_ms = 0;
+    int16_t attack_interval_ms = 1000;
+    int16_t teleport_timer_ms = 0;
+    int16_t max_health = 100;
+    int16_t max_magicka = 100;
+    int16_t health = 1;
+    int16_t magicka = 1;
+    int16_t strength = 0;
+    int16_t intelligence = 0;
+    int16_t willpower = 0;
+    int16_t agility = 0;
+    int16_t move_speed = 0;
+    int16_t endurance = 0;
+    int16_t personality = 0;
+    int16_t armour_rating = 0;
+    int16_t dodge_chance = 0;
+    int16_t block_chance = 0;
+    int16_t defense_rating = 100;
+    int16_t attack_rating = 100;
+    int16_t engage_radius = 0;
+    int16_t disengage_radius = 0;
+    int16_t spell_buff_remaining_ms = 0;
+    int16_t dodge_chance_multiplier_percent = 100;
+    int16_t health_capacity_bonus = 0;
+    int16_t magicka_capacity_bonus = 0;
+    int16_t attack_bonus = 0;
+    int16_t armour_bonus = 0;
+    int16_t defense_bonus = 0;
+    int16_t damage_bonus = 0;
+    int16_t strength_bonus = 0;
+    int16_t potion_buff_duration_ms = 0;
+    int16_t combat_text_y = 0;
+    int16_t combat_text_start_y = 0;
+    SharedArray<int32_t> class_record;
+    SharedArray<int32_t> world_position = SharedArray<int32_t>(2);
+    SharedArray<int32_t> footprint_center_position = SharedArray<int32_t>(2);
+    SharedArray<int32_t> footprint_right_position = SharedArray<int32_t>(2);
+    SharedArray<int32_t> previous_world_position = SharedArray<int32_t>(2);
+    SharedArray<int32_t> quick_health_potion_record;
+    SharedArray<int32_t> quick_magicka_potion_record;
+    SharedArray<int32_t> available_spell_ids;
+    SharedArray<int32_t> screen_position = SharedArray<int32_t>(2);
+    SharedArray<int32_t> move_target = SharedArray<int32_t>{-1, -1};
+    SharedArray<int32_t> inventory_entries = SharedArray<int32_t>(255);
+    SharedArray<int32_t> active_hand_record;
+    SharedArray<int32_t> stowed_hand_record;
+    SharedArray<int32_t> equipped_armour_ids = SharedArray<int32_t>(8);
+    SharedArray<int32_t> definition_record;
+    int32_t loot_pickup_delay_elapsed_ms = 0;
+    int32_t experience = 0;
+    int32_t combat_text_color = 0xFF0000;
+    int32_t combat_text_fade_step = 0;
+    int32_t attack_elapsed_ms = 0;
+    Actor *combat_target = nullptr;
+    Actor *damage_over_time_source = nullptr;
+    Actor *summoned_actor = nullptr;
+    Actor *summoner = nullptr;
+    std::optional<std::string> combat_text;
+    std::string sprite_path;
+    std::optional<std::string> name;
+    SpriteFrame *sprite_atlas = nullptr;
+};
+
+#endif

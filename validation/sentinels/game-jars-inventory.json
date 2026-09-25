@@ -1,0 +1,50 @@
+{
+  "format_version": 1,
+  "jars": [
+    {
+      "archive_sha256": "5e5f1f7bfe0f19fce58298159ead518a8c69be8cc3e2aa2036d8c8c3868f9e79",
+      "archive_size": 192149,
+      "canonical_name": "tes-oblivion-mobile-1.0.10-jam-2.0.0.0.jar",
+      "content_tree_sha256": "b4b8cf1abe60217bac3b3e397d505ed7b1fc80557a6fb45ed81b4d69efb59f8f",
+      "entry_count": 125,
+      "midlet": {
+        "configuration": "CLDC-1.0",
+        "main_class": "blt.Main",
+        "name": "Elder Scrolls",
+        "profile": "MIDP-1.0",
+        "vendor": "Superscape",
+        "version": "1.0.10"
+      }
+    },
+    {
+      "archive_sha256": "e1d7c06f1fc9cef3aa55b9c09a1c16c82ddd87a8013cbc50594e9c9e2c3b596f",
+      "archive_size": 192144,
+      "canonical_name": "tes-oblivion-mobile-1.0.10-jam-2.0.0.1.jar",
+      "content_tree_sha256": "d9922e8917c1efdac09a770f856ee6091ed1febe0043bf2d8533127cfd7b9fc2",
+      "entry_count": 125,
+      "midlet": {
+        "configuration": "CLDC-1.0",
+        "main_class": "blt.Main",
+        "name": "Elder Scrolls",
+        "profile": "MIDP-1.0",
+        "vendor": "Superscape",
+        "version": "1.0.10"
+      }
+    },
+    {
+      "archive_sha256": "8dcbe52a1e04e2896f78ab4059dcb1b664d789a8451e4d1e070e277c3c3debab",
+      "archive_size": 185752,
+      "canonical_name": "tes-oblivion-mobile-1.0.10.jar",
+      "content_tree_sha256": "8d1c202d53272fb00794a208033bcb25025819190162b071b46053dd5ac40693",
+      "entry_count": 124,
+      "midlet": {
+        "configuration": "CLDC-1.0",
+        "main_class": "blt.Main",
+        "name": "Oblivion mobile",
+        "profile": "MIDP-1.0",
+        "vendor": "Superscape",
+        "version": "1.0.10"
+      }
+    }
+  ]
+}

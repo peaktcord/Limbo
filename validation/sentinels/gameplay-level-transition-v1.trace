@@ -1,0 +1,7 @@
+# name|time_ms|level_id|state|script_status|player_present|player_world_x|player_world_y|player_screen_x|player_screen_y|camera_offset_x|camera_offset_y|camera_target_actor|active_actor_count|logical_frame_fnv1a64
+source-exit|103140|/l01_1.scr|0|script stack empty|1|4100|650|431|296|-343|-146|0|17|13645552732964816034
+destination-loading|103760|/l02_2_1.scr|15|running|1|4265|2828|179|443|-241|-259|-1|4|8540825861950431946
+destination-menu|104260|/l02_2_1.scr|3|running|1|4265|2828|179|443|-241|-259|-1|4|14721587561049134928
+destination-script|105620|/l02_2_1.scr|0|waiting for actor 1 to reach (4265,1400), it is at (4700,1400) dead=0|1|4265|2336|241|412|-241|-259|-1|4|10205587296180837721
+destination-ready|144820|/l02_2.scr|0|script stack empty|1|1722|1934|-27|228|86|-65|0|1|5162607447078517698
+destination-moved|145440|/l02_2.scr|0|script stack empty|1|1780|1934|-20|232|86|-65|0|1|2354421627033512799

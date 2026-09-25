@@ -1,0 +1,58 @@
+module(
+    name = "limbo",
+    version = "0.1.0",
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.22")
+bazel_dep(name = "rules_decomp", version = "0.1.0")
+bazel_dep(name = "rules_nodejs", version = "6.7.3")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.5")
+bazel_dep(name = "emsdk", version = "6.0.8")
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
+node.toolchain(node_version = "20.18.0")
+use_repo(node, "nodejs")
+
+archive_override(
+    module_name = "emsdk",
+    integrity = "sha256-O7bJn7B0BfTPBUdDwaINZax8G3CgRTEhY3VCa5fJMwo=",
+    patch_strip = 1,
+    patches = ["//third_party/emsdk:0001-create-pkgconfig-directory.patch"],
+    strip_prefix = "emsdk-6.0.8/bazel",
+    urls = ["https://github.com/emscripten-core/emsdk/archive/refs/tags/6.0.8.tar.gz"],
+)
+
+emscripten_cache = use_extension(
+    "@emsdk//:emscripten_cache.bzl",
+    "emscripten_cache",
+)
+emscripten_cache.targets(targets = [
+    "libGL-getprocaddr",
+    "libal",
+    "libc++-debug",
+    "libc++abi-debug",
+    "libc-debug",
+    "libclang_rt.builtins",
+    "libdlmalloc-debug",
+    "libhtml5",
+    "libnoexit",
+    "libprintf_long_double-debug",
+    "libsockets",
+    "libstubs-debug",
+    "sdl3",
+    "sysroot",
+])
+
+git_override(
+    module_name = "rules_decomp",
+    commit = "89ebc76ae86ade657fc7e9e400458dfaab1e94d3",
+    remote = "https://github.com/peaktcord/rules_decomp.git",
+)
+
+decomp = use_extension("@rules_decomp//:extensions.bzl", "decomp")
+decomp.pypy(version = "7.3.23")
+decomp.sdl3(version = "3.4.14")
+use_repo(decomp, "decomp_pypy", "decomp_sdl3")
+
+register_toolchains("@decomp_pypy//:toolchain")

@@ -1,0 +1,8 @@
+# name|time_ms|state|page|tab|selected|child_count|root_label|selected_label|health|max_health|quick_health|inventory_count|logical_frame_fnv1a64
+potion-selected|103760|2|-1|2|3|4|Items|Minor Healing Potion|64|114|-1|6|4782521112672005382
+potion-assigned|103880|2|-1|2|3|4|Items|Minor Healing Potion|64|114|1|6|9313556457450653751
+inventory-closed|104000|0|-1|0|0|0|||64|114|1|6|17570579347711514529
+pause-open|104120|3|5|0|0|5||Continue|64|114|1|6|17758871769141199749
+pause-next|104240|3|5|0|1|5||New Game|64|114|1|6|748842897756932274
+pause-continue-selected|104360|3|5|0|0|5||Continue|64|114|1|6|17758871769141199749
+pause-closed|104480|0|5|0|0|0|||64|114|1|6|9497959360673043547
