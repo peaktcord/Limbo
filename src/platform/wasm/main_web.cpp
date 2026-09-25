@@ -84,7 +84,7 @@ struct WebApp {
 
 WebApp *gApp = nullptr;
 
-void startGame(WebApp &app, const std::string &identity) {
+void startGame(WebApp &app) {
     voyage::RuntimeConfig config;
     config.resource_dir = kCacheDirectory;
     config.save_dir = kSaveDirectory;
@@ -110,7 +110,7 @@ void startGame(WebApp &app, const std::string &identity) {
     app.prompt.reset();
     app.frameClock.reset(SDL_GetTicks());
     app.reportedError = false;
-    browserStatus(("Running " + identity + ".").c_str(), 0);
+    browserStatus("", 0);
 }
 
 void present(WebApp &app) {
@@ -137,7 +137,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE int oblivion_import_selected_jar() {
                                                std::filesystem::path(kIncomingJar));
         logging::write(logging::Level::Info, "JAR intake", "Imported " + prepared.canonical_jar_name +
                        "; SHA-256=" + prepared.archive_sha256);
-        startGame(*gApp, prepared.canonical_jar_name);
+        startGame(*gApp);
         return 1;
     } catch (const std::exception &error) {
         std::string message = std::string("Import failed: ") + error.what();
@@ -185,7 +185,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int, char **) {
         if (cached.valid) {
             logging::write(logging::Level::Info, "JAR intake", "Using validated cache; SHA-256=" + cached.archive_sha256);
             try {
-                startGame(*gApp, cached.canonical_jar_name);
+                startGame(*gApp);
             } catch (const std::exception &error) {
                 std::string message = std::string("Cached resources could not boot: ") +
                                       error.what() + ". Select the original JAR to repair them.";
@@ -199,7 +199,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int, char **) {
                 logging::write(logging::Level::Warning, "JAR intake", "Cache rejected: " + cached.reason);
             }
             showPrompt(*gApp, {});
-            browserStatus("Select your original Oblivion mobile JAR. It is verified and extracted locally; nothing is uploaded.", 1);
+            browserStatus("", 1);
         }
 
         present(*gApp);

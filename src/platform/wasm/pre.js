@@ -11,8 +11,8 @@ Module['preRun'].push(function () {
         FS.mount(IDBFS, { autoPersist: true }, '/limbo');
         FS.syncfs(true, function (error) {
             if (error) {
-                Module['oblivionPersistenceReady'] = false;
                 Module['oblivionLogError']('Could not restore persistent game data: ' + error);
+                oblivionStorageFailed();
             } else {
                 Module['oblivionPersistenceReady'] = true;
             }
@@ -20,10 +20,16 @@ Module['preRun'].push(function () {
         });
     } catch (error) {
         Module['oblivionLogError']('Persistent browser storage is unavailable: ' + error);
-        Module['oblivionPersistenceReady'] = false;
+        oblivionStorageFailed();
         removeRunDependency(dependency);
     }
 });
+
+function oblivionStorageFailed() {
+    Module['oblivionPersistenceReady'] = false;
+    Module['oblivionStorageWarning'] = 'Browser storage failed. Progress will not be saved.';
+    Module['oblivionSetStatus'](Module['oblivionStorageWarning'], false);
+}
 
 var oblivionFlushPending = false;
 var oblivionFlushRunning = false;
@@ -38,9 +44,8 @@ function oblivionRunFlush() {
     FS.syncfs(false, function (error) {
         oblivionFlushRunning = false;
         if (error) {
-            Module['oblivionPersistenceReady'] = false;
             Module['oblivionLogError']('Could not save game data to browser storage: ' + error);
-            Module['oblivionSetStatus']('Browser storage failed. Progress may not survive closing this tab.', false);
+            oblivionStorageFailed();
         }
         if (oblivionFlushAgain && Module['oblivionPersistenceReady']) {
             oblivionFlushAgain = false;
