@@ -740,14 +740,10 @@ cc_binary(
 distribution_package(
     name = "limbo_windows_package",
     binary = ":limbo_sdl",
-    docs = [
-        "COPYING",
-        "THIRD_PARTY_NOTICES.md",
-        "packaging/native/CONTROLS.txt",
-        "packaging/native/README.txt",
-        "packaging/native/run.cmd",
-    ],
+    docs = ["packaging/native/CONTROLS.txt"],
     named_files = {
+        "COPYING": "licenses/COPYING",
+        "THIRD_PARTY_NOTICES.md": "licenses/THIRD_PARTY_NOTICES.md",
         "@decomp_sdl3//:license": "licenses/SDL3.txt",
         "@zlib//:LICENSE": "licenses/zlib.txt",
         "packaging/licenses/README.txt": "licenses/README.txt",
@@ -758,14 +754,10 @@ distribution_package(
 
 distribution_package(
     name = "limbo_web_package",
-    docs = [
-        "COPYING",
-        "THIRD_PARTY_NOTICES.md",
-        "packaging/web/README.txt",
-        "tools/serve_web.py",
-    ],
     files = [":limbo_web"],
     named_files = {
+        "COPYING": "licenses/COPYING",
+        "THIRD_PARTY_NOTICES.md": "licenses/THIRD_PARTY_NOTICES.md",
         "@decomp_sdl3//:license": "licenses/SDL3.txt",
         "@zlib//:LICENSE": "licenses/zlib.txt",
         "packaging/licenses/Emscripten.txt": "licenses/Emscripten.txt",

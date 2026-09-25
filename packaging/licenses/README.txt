@@ -1,5 +1,8 @@
-Bundled third-party notices
-===========================
+Licenses
+========
+
+COPYING is the GNU General Public License, version 3, which covers Limbo.
+THIRD_PARTY_NOTICES.md summarizes the components below and their licenses.
 
 The dependency versions are pinned in MODULE.bazel.
 
