@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>// Limbo</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: #fff; color: #000;
+           container-type: inline-size; }
+    main { width: min(100% - 2rem, 46rem); margin: 2rem auto 4rem; }
+
+    #game-shell { box-sizing: border-box;
+                  width: 100cqw; margin-inline: calc(50% - 50cqw);
+                  padding-inline: 1rem; }
+
+    canvas { display: block; margin-inline: auto;
+             height: auto; width: auto;
+             max-height: min(660px, calc(100vh - 16rem)); max-width: 100%;
+             background: #000; image-rendering: pixelated; }
+
+    #status, .actions { width: min(100%, 46rem); margin-inline: auto; }
+    #status { min-height: 1.4em; margin-block: .75rem 0; font-size: .875rem; }
+    .actions { display: flex; gap: .5rem; margin-block: .75rem 0; }
+    button { padding: .35rem .75rem; border: 1px solid #000; border-radius: 0;
+             background: #fff; color: #000; cursor: pointer;
+             font: inherit; font-size: .875rem; }
+    button:hover:not(:disabled) { background: #000; color: #fff; }
+    button:disabled { cursor: wait; opacity: .4; }
+    #jar-file { display: none; }
+
+    h1 { margin: 2.5rem 0 .25rem; font-size: 1.5rem; font-weight: 600;
+         letter-spacing: -.01em; }
+    .lede { margin: 0 0 2rem; font-size: 1rem; line-height: 1.5; }
+
+    h2 { margin: 0 0 .5rem; font-size: .8125rem; font-weight: 600;
+         letter-spacing: .06em; }
+    table { border-collapse: collapse; font-size: .875rem; }
+    th, td { text-align: left; padding: .3rem 1.5rem .3rem 0;
+             vertical-align: top; font-weight: 400; }
+    th { color: #555; white-space: nowrap; }
+    kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note { margin: 2rem 0 0; font-size: .8125rem; color: #555; }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="game-shell">
+      <canvas id="canvas" width="528" height="660" tabindex="0"
+              aria-label="Oblivion game canvas"></canvas>
+      <p id="status" role="status">Loading…</p>
+      <input id="jar-file" type="file" accept=".jar,application/java-archive">
+      <div class="actions">
+        <button id="choose-jar" type="button" hidden>Select original JAR</button>
+        <button id="save-log" type="button">Save log</button>
+      </div>
+    </section>
+
+    <h1>// Limbo</h1>
+    <p class="lede">A port of the <em>The Elder Scrolls IV: Oblivion</em> mobile
+      game to modern systems.</p>
+
+    <h2>Controls</h2>
+    <table>
+      <tbody>
+        <tr><th scope="row">Move</th>
+            <td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrow keys</td></tr>
+        <tr><th scope="row">Act / confirm</th>
+            <td><kbd>Space</kbd>, <kbd>Enter</kbd>, <kbd>E</kbd>, <kbd>F</kbd> or left click</td></tr>
+        <tr><th scope="row">Menu / back</th>
+            <td><kbd>Esc</kbd>, <kbd>Backspace</kbd>, <kbd>P</kbd> or right click</td></tr>
+        <tr><th scope="row">Character</th>
+            <td><kbd>I</kbd>, <kbd>C</kbd> or <kbd>Tab</kbd></td></tr>
+        <tr><th scope="row">Quick health</th>
+            <td><kbd>1</kbd> or <kbd>H</kbd></td></tr>
+        <tr><th scope="row">Quick magicka</th>
+            <td><kbd>2</kbd>, <kbd>M</kbd> or <kbd>R</kbd></td></tr>
+        <tr><th scope="row">Toggle weapon</th>
+            <td><kbd>Q</kbd>, <kbd>X</kbd> or middle click</td></tr>
+        <tr><th scope="row">Wide view</th>
+            <td><kbd>F11</kbd></td></tr>
+        <tr><th scope="row">Fullscreen</th>
+            <td><kbd>Alt + Enter</kbd></td></tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const status = document.getElementById('status');
+    const jarInput = document.getElementById('jar-file');
+    const jarButton = document.getElementById('choose-jar');
+    canvas.addEventListener('contextmenu', event => event.preventDefault());
+    var Module = {
+      canvas: canvas,
+      oblivionLogMessages: [],
+      oblivionLogError: function (text) { Module.oblivionLogMessages.push(String(text)); },
+      print: function (text) { Module.oblivionLogError(text); },
+      printErr: function (text) { Module.oblivionLogError(text); }
+    };
+    Module.oblivionSetStatus = function (text, needsJar) {
+      status.textContent = text;
+      jarButton.hidden = !needsJar;
+      if (!needsJar) canvas.focus();
+    };
+    jarButton.addEventListener('click', function () { jarInput.click(); });
+    jarInput.addEventListener('change', function () {
+      if (jarInput.files.length && Module.oblivionImportJar) {
+        Module.oblivionImportJar(jarInput.files[0]);
+      }
+    });
+    document.getElementById('save-log').addEventListener('click', function () {
+      let bytes;
+      try {
+        bytes = Module.FS.readFile('/limbo/saves/rms/limbo.log');
+      } catch (error) {
+        bytes = Module.oblivionLogMessages.join('\n');
+      }
+      const url = URL.createObjectURL(new Blob([bytes], {type: 'text/plain'}));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'limbo.log';
+      link.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+    window.addEventListener('error', function (event) {
+      Module.oblivionLogError(event.error && event.error.stack || event.message);
+      Module.oblivionSetStatus('The browser build failed: ' + event.message, true);
+    });
+  </script>
+  <script src="limbo_web_cc.js"></script>
+</body>
+</html>
