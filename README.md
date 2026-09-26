@@ -4,6 +4,8 @@ A C++ recreation of the *The Elder Scrolls IV: Oblivion* feature phone game. It 
 
 This does not include any game assets. You will need to have your own copy of the original mobile game `.jar` files.
 
+It's also available as a web version [here](https://peaktcord.github.io/Limbo/). A `.jar` file is still required.
+
 ## Modernizations
 
 This uses controls designed for a keyboard, not a phone pad.
